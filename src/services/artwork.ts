@@ -10,46 +10,22 @@ export const artworkService = {
     artist?: string;
   }): Promise<{ artworks: Artwork[]; total: number; pages: number }> {
     const response = await api.get('/artworks', { params });
-    return response.data;
+    return {
+      artworks: response.data.artworks,
+      total: response.data.pagination.total,
+      pages: response.data.pagination.pages
+    };
   },
 
   async getArtworkById(id: string): Promise<Artwork> {
     const response = await api.get(`/artworks/${id}`);
-    return response.data;
+    return response.data.artwork;
   },
 
-  async createArtwork(artworkData: ArtworkFormData): Promise<Artwork> {
-    const formData = new FormData();
-    
-    // Append text fields
-    Object.keys(artworkData).forEach(key => {
-      if (key !== 'images' && key !== 'tags') {
-        const value = (artworkData as any)[key];
-        if (value !== null && value !== undefined && value !== '') {
-          formData.append(key, value.toString());
-        }
-      }
-    });
-
-    // Append tags individually (not as JSON string)
-    if (artworkData.tags && artworkData.tags.length > 0) {
-      artworkData.tags.forEach(tag => {
-        if (tag.trim()) {
-          formData.append('tags', tag.trim());
-        }
-      });
-    }
-
-    // Append images
-    if (artworkData.images && artworkData.images.length > 0) {
-      artworkData.images.forEach((image) => {
-        formData.append('images', image);
-      });
-    }
-
+  async createArtwork(formData: FormData): Promise<Artwork> {
     // Don't set Content-Type header - let the browser set it automatically
     const response = await api.post('/artworks', formData);
-    return response.data;
+    return response.data.artwork;
   },
 
   async updateArtwork(id: string, artworkData: Partial<ArtworkFormData>): Promise<Artwork> {
@@ -67,6 +43,6 @@ export const artworkService = {
 
   async getCategories(): Promise<string[]> {
     const response = await api.get('/artworks/categories');
-    return response.data;
+    return response.data.categories;
   },
 };

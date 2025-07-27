@@ -34,7 +34,7 @@ const Home: React.FC = () => {
             startDate: '2024-02-15',
             endDate: '2024-03-15',
             location: 'Downtown Gallery',
-            image: 'https://images.pexels.com/photos/1070946/pexels-photo-1070946.jpeg',
+            image: '/src/images/1.jpeg',
             featuredArtworks: [],
             organizer: 'The Sundays Art Hub',
             status: 'upcoming',
@@ -92,7 +92,7 @@ const Home: React.FC = () => {
             <div className="relative">
               <div className="aspect-square bg-white/10 rounded-2xl backdrop-blur-sm p-8">
                 <img
-                  src="https://images.pexels.com/photos/1070946/pexels-photo-1070946.jpeg"
+                  src="/src/images/1.jpeg"
                   alt="Featured artwork"
                   className="w-full h-full object-cover rounded-lg"
                 />

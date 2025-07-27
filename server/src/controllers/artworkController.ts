@@ -143,15 +143,39 @@ export const createArtwork = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const { title, description, price, category, medium, dimensions, tags } = req.body;
+    const { title, description, price, category, medium, dimensions } = req.body;
 
-    // Handle image uploads (in a real app, you'd upload to cloud storage)
+    // Handle image uploads
     const images: string[] = [];
     if (req.files && Array.isArray(req.files)) {
-      // For demo purposes, we'll use placeholder images
-      images.push('https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg');
+      // Process uploaded files
+      for (const file of req.files) {
+        const imageUrl = `${req.protocol}://${req.get('host')}/uploads/artworks/${file.filename}`;
+        images.push(imageUrl);
+      }
     } else {
+      // Fallback to placeholder image if no files uploaded
       images.push('https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg');
+    }
+
+    // Handle tags from form data
+    const tags: string[] = [];
+    if (req.body.tags) {
+      // If tags is an array, use it directly
+      if (Array.isArray(req.body.tags)) {
+        tags.push(...req.body.tags.map((tag: string) => tag.trim().toLowerCase()));
+      } else {
+        // If it's a string, try to parse it as JSON
+        try {
+          const parsedTags = JSON.parse(req.body.tags);
+          if (Array.isArray(parsedTags)) {
+            tags.push(...parsedTags.map((tag: string) => tag.trim().toLowerCase()));
+          }
+        } catch (e) {
+          // If parsing fails, treat it as a single tag
+          tags.push(req.body.tags.trim().toLowerCase());
+        }
+      }
     }
 
     const artworkData = {
@@ -163,7 +187,7 @@ export const createArtwork = async (req: Request, res: Response): Promise<void> 
       dimensions: dimensions.trim(),
       images,
       artist: req.user._id,
-      tags: tags ? JSON.parse(tags).map((tag: string) => tag.trim().toLowerCase()) : [],
+      tags,
     };
 
     const artwork = new Artwork(artworkData);
