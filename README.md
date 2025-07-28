@@ -313,6 +313,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - Design inspiration from modern art marketplace platforms
+- https://drive.google.com/drive/folders/1S-8ZqW_oGRUDxRDQBcXx8xEsXL7BG8g1?usp=drive_link
 - Icons provided by Lucide React
 - Stock images from Pexels
 - Built with modern web technologies and best practices
