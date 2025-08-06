@@ -133,7 +133,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ artworkId }) => 
       <form onSubmit={handleSubmitComment} className="mb-6">
         <div className="flex space-x-3">
           <img
-            src={user.avatar || '/default-avatar.png'}
+            src={user.avatar || '/images/artwork-portrait-1.jpeg'}
             alt={user.name}
             className="w-10 h-10 rounded-full"
           />
@@ -165,7 +165,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ artworkId }) => 
           <div key={comment._id} className="border-b pb-4">
             <div className="flex space-x-3">
               <img
-                src={comment.author.avatar || '/default-avatar.png'}
+                src={comment.author.avatar || '/images/artwork-portrait-1.jpeg'}
                 alt={comment.author.name}
                 className="w-10 h-10 rounded-full"
               />

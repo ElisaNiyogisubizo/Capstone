@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem('user');
           setUser(null);
           setError('Session expired. Please log in again.');
-          // Don't show toast here to avoid spam on app load
+          // Don't redirect here to avoid infinite loops
         }
       }
       setLoading(false);
@@ -104,6 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.warn('Failed to refresh user data:', error);
       logout();
+      // Don't redirect here to avoid infinite loops
     }
   };
 

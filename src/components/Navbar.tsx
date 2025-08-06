@@ -115,8 +115,8 @@ const Navbar: React.FC = () => {
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center space-x-2 p-2 rounded-md hover:bg-secondary/20 transition-colors"
                   >
-                    <Avatar src={user.avatar} alt={user.name || 'User'} size="sm" />
-                    <span className="text-sm font-medium text-gray-700">{user.name || 'User'}</span>
+                    <Avatar src={user.avatar} alt={user.name} size="sm" />
+                    <span className="text-sm font-medium text-gray-700">{user.name}</span>
                   </button>
 
                   {isProfileOpen && (
@@ -223,10 +223,10 @@ const Navbar: React.FC = () => {
               <div className="border-t pt-4">
                 <div className="px-3 py-2">
                   <div className="flex items-center space-x-3">
-                    <Avatar src={user.avatar} alt={user.name || 'User'} size="md" />
+                    <Avatar src={user.avatar} alt={user.name} size="md" />
                     <div>
-                      <div className="text-base font-medium text-gray-800">{user.name || 'User'}</div>
-                      <div className="text-sm text-gray-500 capitalize">{user.role || 'user'}</div>
+                      <div className="text-base font-medium text-gray-800">{user.name}</div>
+                      <div className="text-sm text-gray-500 capitalize">{user.role}</div>
                     </div>
                   </div>
                 </div>

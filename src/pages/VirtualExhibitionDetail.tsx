@@ -124,7 +124,7 @@ const VirtualExhibitionDetail: React.FC = () => {
           <div className="space-y-4">
             <div className="relative aspect-video bg-white rounded-lg shadow-lg overflow-hidden">
               <img
-                src={exhibition.coverImage || '/placeholder-exhibition.jpg'}
+                src={exhibition.coverImage || '/images/artwork-landscape-1.jpeg'}
                 alt={exhibition.title}
                 className="w-full h-full object-cover"
               />

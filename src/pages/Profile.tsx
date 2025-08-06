@@ -187,7 +187,7 @@ const Profile: React.FC = () => {
           <div className="relative">
             <Avatar 
               src={profileData?.avatar || defaultImages.avatar} 
-              alt={profileData?.name || 'User'} 
+                              alt={profileData?.name} 
               size="xl" 
             />
             {editing && (

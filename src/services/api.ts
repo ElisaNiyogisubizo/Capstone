@@ -62,20 +62,20 @@ api.interceptors.response.use(
     (customError as any).originalError = error;
     (customError as any).status = error.response?.status;
     
-    // Only redirect to login for 401 errors on protected routes
-    // Don't redirect for public routes or auth endpoints
+    // Only redirect for 401 errors on protected routes, not on public pages
     if (error.response?.status === 401 && 
         !error.config?.url?.includes('/auth/login') && 
         !error.config?.url?.includes('/auth/register') &&
         !error.config?.url?.includes('/auth/me')) {
-      console.log('❌ 401 Unauthorized - clearing token and redirecting');
+      console.log('❌ 401 Unauthorized - clearing token');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      
       // Only redirect if we're not already on a public page
       const currentPath = window.location.pathname;
       const publicPaths = ['/', '/browse', '/exhibitions', '/virtual-exhibitions', '/artists', '/login', '/register'];
       if (!publicPaths.includes(currentPath) && !currentPath.startsWith('/artwork/') && !currentPath.startsWith('/artists/') && !currentPath.startsWith('/exhibitions/')) {
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     }
     

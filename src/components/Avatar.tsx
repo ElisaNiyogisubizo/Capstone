@@ -7,7 +7,7 @@ interface AvatarProps {
   className?: string;
 }
 
-const Avatar: React.FC<AvatarProps> = ({ src, alt = 'User', size = 'md', className = '' }) => {
+const Avatar: React.FC<AvatarProps> = ({ src, alt, size = 'md', className = '' }) => {
   const getInitials = (name: string) => {
     if (!name || name.trim() === '') return 'U';
     
@@ -54,7 +54,7 @@ const Avatar: React.FC<AvatarProps> = ({ src, alt = 'User', size = 'md', classNa
     return colors[index];
   };
 
-  const displayName = alt || 'User';
+  const displayName = alt || '';
   const initials = getInitials(displayName);
   const backgroundColor = getBackgroundColor(displayName);
 

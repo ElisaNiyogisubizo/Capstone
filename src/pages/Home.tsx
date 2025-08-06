@@ -32,8 +32,8 @@ const Home: React.FC = () => {
       setRecentArtworks(recentResponse.artworks || []);
 
       // Fetch top artists
-      const artistsResponse = await userService.getUsers({ role: 'artist', limit: 4 });
-      setTopArtists(artistsResponse.users || []);
+      const artistsResponse = await userService.getArtists({ limit: 4 });
+      setTopArtists(artistsResponse.artists || []);
 
       // Fetch upcoming exhibitions
       const exhibitionsResponse = await exhibitionService.getExhibitions({ limit: 3 });
@@ -88,19 +88,14 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative h-screen bg-gradient-to-br from-primary/5 via-white to-secondary/10">
-        <div className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{
-            backgroundImage: `url(${defaultImages.cover})`
-          }}
-        ></div>
+      <div className="relative h-screen bg-primary">
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
+          <div className="flex-1 max-w-2xl">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
               Discover & Collect<br />
               Extraordinary Art
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-gray-200 mb-8">
               Connect with talented local artists, explore unique artworks, and become part of a vibrant creative community. Your next favorite piece is waiting to be discovered.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -113,10 +108,29 @@ const Home: React.FC = () => {
               </Link>
               <Link
                 to="/register"
-                className="inline-flex items-center px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary transition-colors"
               >
                 Join as Artist
               </Link>
+            </div>
+          </div>
+          
+          {/* Framed Artwork */}
+          <div className="hidden lg:flex flex-1 justify-center items-center">
+            <div className="relative">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 shadow-2xl">
+                <div className="bg-white rounded-lg overflow-hidden shadow-lg">
+                  <img
+                    src="/images/artwork-abstract-1.jpeg"
+                    alt="Featured Artwork"
+                    className="w-80 h-96 object-cover"
+                  />
+                </div>
+              </div>
+              {/* Decorative corner accent */}
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <Palette className="w-4 h-4 text-white" />
+              </div>
             </div>
           </div>
         </div>

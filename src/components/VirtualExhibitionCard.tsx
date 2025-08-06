@@ -30,7 +30,7 @@ export const VirtualExhibitionCard: React.FC<VirtualExhibitionCardProps> = ({ ex
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         <div className="relative aspect-[16/9] overflow-hidden">
           <img
-            src={exhibition.coverImage || '/placeholder-exhibition.jpg'}
+            src={exhibition.coverImage || '/images/artwork-landscape-1.jpeg'}
             alt={exhibition.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -94,7 +94,7 @@ export const VirtualExhibitionCard: React.FC<VirtualExhibitionCardProps> = ({ ex
           {/* Organizer Info */}
           <div className="flex items-center space-x-2 mb-3">
             <img
-              src={exhibition.organizer?.avatar || '/default-avatar.png'}
+              src={exhibition.organizer?.avatar || '/images/artwork-portrait-1.jpeg'}
               alt={exhibition.organizer?.name}
               className="w-6 h-6 rounded-full"
             />

@@ -115,7 +115,7 @@ export const CartIcon: React.FC<CartIconProps> = ({ className = '' }) => {
                   {cartItems.map((item) => (
                     <div key={item.artwork} className="flex items-center space-x-3 p-3 border rounded">
                       <img
-                        src={item.artworkDetails?.images?.[0] || '/placeholder.jpg'}
+                        src={item.artworkDetails?.images?.[0] || '/images/artwork-modern-1.jpeg'}
                         alt={item.artworkDetails?.title}
                         className="w-16 h-16 object-cover rounded"
                       />
