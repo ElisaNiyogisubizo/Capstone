@@ -7,14 +7,16 @@ import {
   User, 
   LogOut, 
   Settings, 
-  Heart,
   MessageCircle,
   PlusCircle,
-  Palette
+  Palette,
+  Calendar
 } from 'lucide-react';
+import Avatar from './Avatar';
+import { CartIcon } from './CartIcon';
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -30,10 +32,30 @@ const Navbar: React.FC = () => {
     { name: 'Home', path: '/' },
     { name: 'Browse Art', path: '/browse' },
     { name: 'Exhibitions', path: '/exhibitions' },
+    { name: 'Virtual Exhibitions', path: '/virtual-exhibitions' },
     { name: 'Artists', path: '/artists' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Show loading state
+  if (loading) {
+    return (
+      <nav className="bg-white shadow-md relative z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link to="/" className="flex items-center space-x-2">
+              <Palette className="w-8 h-8 text-primary" />
+              <span className="font-display font-bold text-xl text-primary">
+                The Sundays Art Hub
+              </span>
+            </Link>
+            <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="bg-white shadow-md relative z-50">
@@ -85,40 +107,47 @@ const Navbar: React.FC = () => {
                   <MessageCircle className="w-5 h-5" />
                 </Link>
 
+                {/* Cart Icon */}
+                <CartIcon />
+
                 <div className="relative">
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center space-x-2 p-2 rounded-md hover:bg-secondary/20 transition-colors"
                   >
-                    <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <User className="w-4 h-4" />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                    <Avatar src={user.avatar} alt={user.name || 'User'} size="sm" />
+                    <span className="text-sm font-medium text-gray-700">{user.name || 'User'}</span>
                   </button>
 
                   {isProfileOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border animate-fade-in">
                       <Link
-                        to="/profile"
+                        to="/user/profile"
                         className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-secondary/20"
                         onClick={() => setIsProfileOpen(false)}
                       >
                         <User className="w-4 h-4" />
-                        <span>Profile</span>
+                        <span>My Profile</span>
                       </Link>
                       {user.role === 'artist' && (
-                        <Link
-                          to="/artist/dashboard"
-                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-secondary/20"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <Settings className="w-4 h-4" />
-                          <span>Dashboard</span>
-                        </Link>
+                        <>
+                          <Link
+                            to="/artist/dashboard"
+                            className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-secondary/20"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <Settings className="w-4 h-4" />
+                            <span>Dashboard</span>
+                          </Link>
+                          <Link
+                            to="/artist/exhibitions"
+                            className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-secondary/20"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <Calendar className="w-4 h-4" />
+                            <span>My Exhibitions</span>
+                          </Link>
+                        </>
                       )}
                       {user.role === 'admin' && (
                         <Link
@@ -194,16 +223,10 @@ const Navbar: React.FC = () => {
               <div className="border-t pt-4">
                 <div className="px-3 py-2">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <User className="w-5 h-5" />
-                      )}
-                    </div>
+                    <Avatar src={user.avatar} alt={user.name || 'User'} size="md" />
                     <div>
-                      <div className="text-base font-medium text-gray-800">{user.name}</div>
-                      <div className="text-sm text-gray-500 capitalize">{user.role}</div>
+                      <div className="text-base font-medium text-gray-800">{user.name || 'User'}</div>
+                      <div className="text-sm text-gray-500 capitalize">{user.role || 'user'}</div>
                     </div>
                   </div>
                 </div>

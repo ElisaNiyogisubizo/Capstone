@@ -23,6 +23,9 @@ export interface IUser extends Document {
   totalRatings: number;
   isActive: boolean;
   lastLogin?: Date;
+  // Engagement fields
+  followers: mongoose.Types.ObjectId[];
+  following: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -107,6 +110,17 @@ const userSchema = new Schema<IUser>({
   lastLogin: {
     type: Date,
   },
+  // Engagement fields
+  followers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    default: [],
+  }],
+  following: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    default: [],
+  }],
 }, {
   timestamps: true,
 });

@@ -14,6 +14,7 @@ export interface IArtwork extends Document {
   likes: mongoose.Types.ObjectId[];
   views: number;
   featured: boolean;
+  comments: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -87,6 +88,7 @@ const artworkSchema = new Schema<IArtwork>({
   likes: [{
     type: Schema.Types.ObjectId,
     ref: 'User',
+    default: [],
   }],
   views: {
     type: Number,
@@ -97,6 +99,11 @@ const artworkSchema = new Schema<IArtwork>({
     type: Boolean,
     default: false,
   },
+  comments: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Comment',
+    default: [],
+  }],
 }, {
   timestamps: true,
 });
@@ -113,7 +120,7 @@ artworkSchema.index({ title: 'text', description: 'text', tags: 'text' });
 
 // Virtual for like count
 artworkSchema.virtual('likeCount').get(function() {
-  return this.likes.length;
+  return this.likes ? this.likes.length : 0;
 });
 
 // Ensure virtual fields are serialized

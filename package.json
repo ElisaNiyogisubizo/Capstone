@@ -12,6 +12,7 @@
     "server:install": "cd server && npm install"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^7.7.0",
     "axios": "^1.6.8",
     "date-fns": "^3.6.0",
     "lucide-react": "^0.344.0",

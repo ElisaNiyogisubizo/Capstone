@@ -1,38 +1,51 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Palette } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const from = location.state?.from?.pathname || '/';
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+    // Clear error when user starts typing
+    if (error) {
+      setError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       await login(formData.email, formData.password);
-      navigate(from, { replace: true });
-    } catch (error) {
-      // Error is handled in AuthContext
+      // Redirect based on user role
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user.role === 'artist') {
+        navigate('/artist/dashboard', { replace: true });
+      } else {
+        navigate('/browse', { replace: true });
+      }
+    } catch (error: unknown) {
+      // Set specific error message for better UX
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -61,6 +74,22 @@ const Login: React.FC = () => {
 
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -157,13 +186,16 @@ const Login: React.FC = () => {
           <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Accounts:</h3>
           <div className="space-y-2 text-xs text-gray-600">
             <div>
-              <strong>Artist:</strong> artist@demo.com / password123
+              <strong>Artist (Sarah):</strong> sarah@example.com / password123
             </div>
             <div>
-              <strong>Community:</strong> user@demo.com / password123
+              <strong>Artist (Michael):</strong> michael@example.com / password123
             </div>
             <div>
-              <strong>Admin:</strong> admin@demo.com / password123
+              <strong>Artist (Emma):</strong> emma@example.com / password123
+            </div>
+            <div>
+              <strong>Community:</strong> john@example.com / password123
             </div>
           </div>
         </div>

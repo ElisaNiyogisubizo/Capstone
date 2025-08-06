@@ -14,21 +14,11 @@ import { authenticate, optionalAuthenticate } from '../middleware/auth';
 
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/artworks/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-  },
-});
-
+// Configure multer for file uploads (memory storage for Cloudinary)
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -71,7 +61,7 @@ router.get('/', optionalAuthenticate, getArtworks);
 router.get('/categories', getCategories);
 router.get('/:id', optionalAuthenticate, getArtworkById);
 router.post('/', authenticate, upload.array('images', 5), createArtworkValidation, createArtwork);
-router.put('/:id', authenticate, updateArtwork);
+router.put('/:id', authenticate, upload.array('images', 5), updateArtwork);
 router.delete('/:id', authenticate, deleteArtwork);
 router.post('/:id/like', authenticate, likeArtwork);
 

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
+
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -13,29 +13,44 @@ import artworkRoutes from './routes/artwork';
 import userRoutes from './routes/user';
 import messageRoutes from './routes/message';
 import exhibitionRoutes from './routes/exhibition';
+import adminRoutes from './routes/admin';
+import virtualExhibitionRoutes from './routes/virtualExhibition';
+import cartRoutes from './routes/cart';
+import orderRoutes from './routes/order';
+import commentRoutes from './routes/comment';
+import followRoutes from './routes/follow';
+import analyticsRoutes from './routes/analytics';
 
 // Load environment variables
 dotenv.config();
 
+// Debug: Check environment variables after dotenv.config()
+console.log('Environment variables check (after dotenv.config()):');
+console.log('MONGODB_URI available:', !!process.env.MONGODB_URI);
+console.log('JWT_SECRET available:', !!process.env.JWT_SECRET);
+console.log('STRIPE_SECRET_KEY available:', !!process.env.STRIPE_SECRET_KEY);
+console.log('STRIPE_SECRET_KEY value (first 10 chars):', process.env.STRIPE_SECRET_KEY?.substring(0, 10) || 'NOT_SET');
+console.log('All env vars starting with STRIPE:', Object.keys(process.env).filter(key => key.startsWith('STRIPE')));
+console.log('CLOUDINARY_CLOUD_NAME available:', !!process.env.CLOUDINARY_CLOUD_NAME);
+console.log('CLOUDINARY_API_KEY available:', !!process.env.CLOUDINARY_API_KEY);
+console.log('CLOUDINARY_API_SECRET available:', !!process.env.CLOUDINARY_API_SECRET);
+console.log('CLOUDINARY_CLOUD_NAME value:', process.env.CLOUDINARY_CLOUD_NAME || 'NOT_SET');
+
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 
 // Security middleware
 app.use(helmet());
 app.use(compression());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-});
-app.use('/api/', limiter);
+// Rate limiting removed for development
 
 // CORS configuration
 app.use(cors({
-  origin: '*',
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
 // Body parsing middleware
@@ -51,6 +66,13 @@ app.use('/api/artworks', artworkRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/exhibitions', exhibitionRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/virtual-exhibitions', virtualExhibitionRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/follows', followRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

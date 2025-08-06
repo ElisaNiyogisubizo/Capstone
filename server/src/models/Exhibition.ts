@@ -11,7 +11,14 @@ export interface IExhibition extends Document {
   organizer: mongoose.Types.ObjectId;
   status: 'upcoming' | 'ongoing' | 'completed';
   maxCapacity?: number;
+  price?: number;
+  isFree?: boolean;
+  tags?: string[];
+  additionalImages?: string[];
   registeredUsers: mongoose.Types.ObjectId[];
+  accessType: 'free' | 'paid';
+  stripeProductId?: string;
+  stripePriceId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,10 +78,37 @@ const exhibitionSchema = new Schema<IExhibition>({
     type: Number,
     min: [1, 'Max capacity must be at least 1'],
   },
+  price: {
+    type: Number,
+    min: [0, 'Price cannot be negative'],
+    default: 0,
+  },
+  isFree: {
+    type: Boolean,
+    default: true,
+  },
+  tags: [{
+    type: String,
+    trim: true,
+  }],
+  additionalImages: [{
+    type: String,
+  }],
   registeredUsers: [{
     type: Schema.Types.ObjectId,
     ref: 'User',
   }],
+  accessType: {
+    type: String,
+    enum: ['free', 'paid'],
+    default: 'free',
+  },
+  stripeProductId: {
+    type: String,
+  },
+  stripePriceId: {
+    type: String,
+  },
 }, {
   timestamps: true,
 });

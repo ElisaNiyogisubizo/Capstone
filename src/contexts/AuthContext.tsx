@@ -20,6 +20,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -28,8 +29,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const userData = await authService.getCurrentUser();
           setUser(userData);
+          setError(null);
         } catch (error) {
+          console.warn('Authentication failed, clearing invalid token:', error);
+          // Clear invalid token and user data
           localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+          setError('Session expired. Please log in again.');
+          // Don't show toast here to avoid spam on app load
         }
       }
       setLoading(false);
@@ -40,32 +48,63 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
+      setError(null);
       const { user, token } = await authService.login(email, password);
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
       toast.success('Welcome back!');
-    } catch (error: any) {
-      toast.error(error.message || 'Login failed');
+      return { user, token };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
       throw error;
     }
   };
 
   const register = async (userData: RegisterData) => {
     try {
+      setError(null);
       const { user, token } = await authService.register(userData);
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
       toast.success('Account created successfully!');
-    } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
+      return { user, token };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
       throw error;
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
+    setError(null);
     toast.success('Logged out successfully');
+  };
+
+  const clearError = () => {
+    setError(null);
+  };
+
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+        setError(null);
+        return userData;
+      }
+    } catch (error) {
+      console.warn('Failed to refresh user data:', error);
+      logout();
+    }
   };
 
   const value: AuthContextType = {
@@ -74,6 +113,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     loading,
+    error,
+    clearError,
+    refreshUser,
   };
 
   return (

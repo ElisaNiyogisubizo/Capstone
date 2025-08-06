@@ -18,9 +18,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(error => error.msg).join(', ');
       res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: errorMessages,
         errors: errors.array(),
       });
       return;
@@ -92,9 +93,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(error => error.msg).join(', ');
       res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: errorMessages,
         errors: errors.array(),
       });
       return;

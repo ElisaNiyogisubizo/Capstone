@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { body } from 'express-validator';
 import Exhibition from '../models/Exhibition';
 import { authenticate, authorize, optionalAuthenticate } from '../middleware/auth';
@@ -6,9 +6,9 @@ import { authenticate, authorize, optionalAuthenticate } from '../middleware/aut
 const router = express.Router();
 
 // Get all exhibitions
-router.get('/', optionalAuthenticate, async (req, res) => {
+router.get('/', optionalAuthenticate, async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 12, status, upcoming } = req.query;
+    const { page = 1, limit = 12, status, upcoming, organizer } = req.query;
 
     const query: any = {};
     
@@ -16,6 +16,10 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       query.status = status;
     } else if (upcoming === 'true') {
       query.status = { $in: ['upcoming', 'ongoing'] };
+    }
+
+    if (organizer) {
+      query.organizer = organizer;
     }
 
     const pageNum = Math.max(1, Number(page));
@@ -58,7 +62,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
 });
 
 // Get exhibition by ID
-router.get('/:id', optionalAuthenticate, async (req, res) => {
+router.get('/:id', optionalAuthenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -94,11 +98,20 @@ router.get('/:id', optionalAuthenticate, async (req, res) => {
   }
 });
 
-// Create exhibition (admin only)
+// Create exhibition (admin and artists)
 router.post(
   '/',
   authenticate,
-  authorize('admin'),
+  authorize('admin', 'artist'),
+  (req: Request, res: Response, next: NextFunction) => {
+    console.log('=== EXHIBITION CREATE ROUTE ===');
+    console.log('🔐 User authenticated:', !!req.user);
+    console.log('👤 User object:', req.user);
+    console.log('👤 User ID:', req.user?._id);
+    console.log('👤 User role:', req.user?.role);
+    console.log('📝 Request body:', req.body);
+    next();
+  },
   [
     body('title')
       .trim()
@@ -122,7 +135,7 @@ router.post(
       .isURL()
       .withMessage('Image must be a valid URL'),
   ],
-  async (req: express.Request, res: express.Response) => {
+  async (req: Request, res: Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({
@@ -140,6 +153,10 @@ router.post(
         image,
         featuredArtworks,
         maxCapacity,
+        price,
+        isFree,
+        tags,
+        additionalImages,
       } = req.body;
 
       const exhibitionData: any = {
@@ -158,6 +175,22 @@ router.post(
 
       if (maxCapacity) {
         exhibitionData.maxCapacity = Number(maxCapacity);
+      }
+
+      if (price !== undefined) {
+        exhibitionData.price = Number(price);
+      }
+
+      if (isFree !== undefined) {
+        exhibitionData.isFree = Boolean(isFree);
+      }
+
+      if (tags && Array.isArray(tags)) {
+        exhibitionData.tags = tags;
+      }
+
+      if (additionalImages && Array.isArray(additionalImages)) {
+        exhibitionData.additionalImages = additionalImages;
       }
 
       const exhibition = new Exhibition(exhibitionData);
@@ -182,7 +215,7 @@ router.post(
 );
 
 // Register for exhibition
-router.post('/:id/register', authenticate, async (req, res) => {
+router.post('/:id/register', authenticate, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -242,6 +275,106 @@ router.post('/:id/register', authenticate, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to register for exhibition',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
+// Update exhibition (admin only)
+router.put('/:id', authenticate, authorize('admin'), [
+  body('title')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 200 })
+    .withMessage('Title must be between 1 and 200 characters'),
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 2000 })
+    .withMessage('Description must be between 10 and 2000 characters'),
+  body('startDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Start date must be a valid date'),
+  body('endDate')
+    .optional()
+    .isISO8601()
+    .withMessage('End date must be a valid date'),
+  body('location')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 200 })
+    .withMessage('Location must be between 1 and 200 characters'),
+  body('image')
+    .optional()
+    .isURL()
+    .withMessage('Image must be a valid URL'),
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const exhibition = await Exhibition.findById(id);
+    if (!exhibition) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exhibition not found',
+      });
+    }
+
+    // Update exhibition fields
+    Object.keys(updates).forEach(key => {
+      if (updates[key] !== undefined) {
+        if (key === 'startDate' || key === 'endDate') {
+          (exhibition as any)[key] = new Date(updates[key]);
+        } else {
+          (exhibition as any)[key] = updates[key];
+        }
+      }
+    });
+
+    await exhibition.save();
+    await exhibition.populate('organizer', 'name avatar');
+
+    return res.json({
+      success: true,
+      message: 'Exhibition updated successfully',
+      exhibition,
+    });
+  } catch (error: any) {
+    console.error('Update exhibition error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update exhibition',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
+// Delete exhibition (admin only)
+router.delete('/:id', authenticate, authorize('admin'), async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+
+    const exhibition = await Exhibition.findById(id);
+    if (!exhibition) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exhibition not found',
+      });
+    }
+
+    await Exhibition.findByIdAndDelete(id);
+
+    return res.json({
+      success: true,
+      message: 'Exhibition deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('Delete exhibition error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete exhibition',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }

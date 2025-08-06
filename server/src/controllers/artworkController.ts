@@ -2,6 +2,14 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import Artwork from '../models/Artwork';
 import User from '../models/User';
+import { cloudinaryService } from '../services/cloudinary';
+
+// Local image fallbacks
+const localImages = {
+  artwork: '/images/artwork-abstract-1.jpeg',
+  avatar: '/images/artwork-portrait-1.jpeg',
+  cover: '/images/artwork-landscape-1.jpeg'
+};
 
 export const getArtworks = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -22,7 +30,11 @@ export const getArtworks = async (req: Request, res: Response): Promise<void> =>
     const query: any = {};
     
     if (category) query.category = category;
-    if (artist) query.artist = artist;
+    if (artist) {
+      query.artist = artist;
+      console.log('Filtering by artist:', artist);
+      console.log('Query:', query);
+    }
     if (status) query.status = status;
     
     if (minPrice || maxPrice) {
@@ -143,37 +155,50 @@ export const createArtwork = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const { title, description, price, category, medium, dimensions } = req.body;
+    const { title, description, price, category, medium, dimensions, tags } = req.body;
 
-    // Handle image uploads
+    // Handle image uploads to Cloudinary
     const images: string[] = [];
-    if (req.files && Array.isArray(req.files)) {
-      // Process uploaded files
-      for (const file of req.files) {
-        const imageUrl = `${req.protocol}://${req.get('host')}/uploads/artworks/${file.filename}`;
-        images.push(imageUrl);
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      try {
+        const uploadResults = await cloudinaryService.uploadMultipleFiles(req.files, 'artworks');
+        images.push(...uploadResults.map(result => result.secure_url));
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to upload images to Cloudinary',
+          error: process.env.NODE_ENV === 'development' ? (uploadError as Error).message : undefined,
+        });
+        return;
       }
     } else {
-      // Fallback to placeholder image if no files uploaded
-      images.push('https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg');
+      // No images uploaded, use a default placeholder
+      images.push('/images/artwork-abstract-1.jpeg');
     }
 
-    // Handle tags from form data
-    const tags: string[] = [];
-    if (req.body.tags) {
-      // If tags is an array, use it directly
-      if (Array.isArray(req.body.tags)) {
-        tags.push(...req.body.tags.map((tag: string) => tag.trim().toLowerCase()));
-      } else {
-        // If it's a string, try to parse it as JSON
+    // Handle tags - they can come as an array from FormData or as a JSON string
+    let processedTags: string[] = [];
+    if (tags) {
+      if (Array.isArray(tags)) {
+        // Tags come as array from FormData
+        processedTags = tags.map((tag: any) => tag.trim().toLowerCase()).filter((tag: string) => tag);
+      } else if (typeof tags === 'string') {
+        // Tags come as JSON string or comma-separated string
         try {
-          const parsedTags = JSON.parse(req.body.tags);
+          // First try to parse as JSON
+          const parsedTags = JSON.parse(tags);
           if (Array.isArray(parsedTags)) {
-            tags.push(...parsedTags.map((tag: string) => tag.trim().toLowerCase()));
+            processedTags = parsedTags.map((tag: any) => tag.trim().toLowerCase()).filter((tag: string) => tag);
+          } else {
+            processedTags = [];
           }
-        } catch (e) {
-          // If parsing fails, treat it as a single tag
-          tags.push(req.body.tags.trim().toLowerCase());
+        } catch (error) {
+          // If JSON parsing fails, try comma-separated string
+          console.log('Tags not valid JSON, treating as comma-separated string:', tags);
+          processedTags = tags.split(',')
+            .map((tag: string) => tag.trim().toLowerCase())
+            .filter((tag: string) => tag);
         }
       }
     }
@@ -187,7 +212,7 @@ export const createArtwork = async (req: Request, res: Response): Promise<void> 
       dimensions: dimensions.trim(),
       images,
       artist: req.user._id,
-      tags,
+      tags: processedTags,
     };
 
     const artwork = new Artwork(artworkData);
@@ -253,11 +278,48 @@ export const updateArtwork = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    // Handle image uploads if new images are provided
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      try {
+        const uploadResults = await cloudinaryService.uploadMultipleFiles(req.files, 'artworks');
+        const newImageUrls = uploadResults.map(result => result.secure_url);
+        
+        // Replace existing images with new ones
+        artwork.images = newImageUrls;
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to upload images to Cloudinary',
+          error: process.env.NODE_ENV === 'development' ? (uploadError as Error).message : undefined,
+        });
+        return;
+      }
+    }
+
     // Update artwork fields
     updates.forEach(update => {
       if (req.body[update] !== undefined) {
-        if (update === 'tags' && Array.isArray(req.body[update])) {
-          artwork.tags = req.body[update].map((tag: string) => tag.trim().toLowerCase());
+        if (update === 'tags') {
+          // Handle tags similar to createArtwork
+          let processedTags: string[] = [];
+          const tags = req.body[update];
+          
+          if (Array.isArray(tags)) {
+            processedTags = tags.map((tag: any) => tag.trim().toLowerCase()).filter((tag: string) => tag);
+          } else if (typeof tags === 'string') {
+            try {
+              const parsedTags = JSON.parse(tags);
+              if (Array.isArray(parsedTags)) {
+                processedTags = parsedTags.map((tag: any) => tag.trim().toLowerCase()).filter((tag: string) => tag);
+              }
+            } catch (error) {
+              processedTags = tags.split(',')
+                .map((tag: string) => tag.trim().toLowerCase())
+                .filter((tag: string) => tag);
+            }
+          }
+          artwork.tags = processedTags;
         } else {
           (artwork as any)[update] = req.body[update];
         }
@@ -350,13 +412,14 @@ export const likeArtwork = async (req: Request, res: Response): Promise<void> =>
     }
 
     const userId = req.user._id;
-    const isLiked = artwork.likes.includes(userId);
+    const isLiked = artwork.likes && artwork.likes.includes(userId);
 
     if (isLiked) {
       // Unlike
-      artwork.likes = artwork.likes.filter(like => like.toString() !== userId.toString());
+      artwork.likes = (artwork.likes || []).filter(like => like.toString() !== userId.toString());
     } else {
       // Like
+      if (!artwork.likes) artwork.likes = [];
       artwork.likes.push(userId);
     }
 

@@ -19,9 +19,16 @@ interface JWTPayload {
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    console.log('🔐 AUTHENTICATE MIDDLEWARE ===');
+    console.log('🔐 Request URL:', req.url);
+    console.log('🔐 Request method:', req.method);
+    
     const authHeader = req.header('Authorization');
+    console.log('🔐 Auth header present:', !!authHeader);
+    console.log('🔐 Auth header starts with Bearer:', authHeader?.startsWith('Bearer '));
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ No valid auth header found');
       res.status(401).json({
         success: false,
         message: 'Access denied. No token provided.',
@@ -40,10 +47,15 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
+    console.log('🔐 JWT decoded successfully, userId:', decoded.userId);
     
     const user = await User.findById(decoded.userId).select('-password');
+    console.log('🔐 User found in database:', !!user);
+    console.log('🔐 User role:', user?.role);
+    console.log('🔐 User isActive:', user?.isActive);
     
     if (!user) {
+      console.log('❌ User not found in database');
       res.status(401).json({
         success: false,
         message: 'Token is not valid - user not found',
@@ -52,6 +64,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
 
     if (!user.isActive) {
+      console.log('❌ User account is deactivated');
       res.status(401).json({
         success: false,
         message: 'Account is deactivated',
@@ -59,6 +72,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
+    console.log('✅ Authentication successful, user attached to request');
     req.user = user;
     next();
   } catch (error: any) {
@@ -89,7 +103,13 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
+    console.log('🔒 AUTHORIZE MIDDLEWARE ===');
+    console.log('🔒 Required roles:', roles);
+    console.log('🔒 User present:', !!req.user);
+    console.log('🔒 User role:', req.user?.role);
+    
     if (!req.user) {
+      console.log('❌ No user in request - authorization failed');
       res.status(401).json({
         success: false,
         message: 'Access denied. User not authenticated.',
@@ -98,6 +118,8 @@ export const authorize = (...roles: string[]) => {
     }
 
     if (!roles.includes(req.user.role)) {
+      console.log('❌ User role not authorized:', req.user.role);
+      console.log('❌ Required roles:', roles);
       res.status(403).json({
         success: false,
         message: `Access denied. Required roles: ${roles.join(', ')}`,
@@ -105,6 +127,7 @@ export const authorize = (...roles: string[]) => {
       return;
     }
 
+    console.log('✅ Authorization successful');
     next();
   };
 };
