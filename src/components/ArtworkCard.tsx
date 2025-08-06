@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Avatar from './Avatar';
 import { AddToCartButton } from './AddToCartButton';
 import { FollowButton } from './FollowButton';
-import { defaultImages } from '../utils/images';
+import { defaultImages, getImageUrl } from '../utils/images';
 
 interface ArtworkCardProps {
   artwork: Artwork;
@@ -48,7 +48,7 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onLike, onMessage })
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         <div className="relative aspect-[4/3] overflow-hidden">
           <img
-            src={artwork.images[0] || defaultImages.artwork}
+            src={getImageUrl(artwork.images[0])}
             alt={artwork.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

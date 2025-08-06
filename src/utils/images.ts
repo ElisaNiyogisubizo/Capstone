@@ -67,4 +67,34 @@ export const defaultImages = {
   avatar: '/images/artwork-portrait-1.jpeg',
   cover: '/images/artwork-landscape-1.jpeg',
   placeholder: '/images/artwork-modern-1.jpeg',
+};
+
+// Function to convert database image paths to proper URLs
+export const getImageUrl = (imagePath: string | null | undefined): string => {
+  if (!imagePath) {
+    return defaultImages.artwork;
+  }
+  
+  // If it's already a proper URL (starts with http/https), return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // If it's a relative path starting with 'public/', remove the 'public' prefix
+  if (imagePath.startsWith('public/')) {
+    return imagePath.replace('public/', '/');
+  }
+  
+  // If it's already a proper relative path (starts with '/'), return as is
+  if (imagePath.startsWith('/')) {
+    return imagePath;
+  }
+  
+  // If it's just a filename, assume it's in the images folder
+  if (!imagePath.includes('/')) {
+    return `/images/${imagePath}`;
+  }
+  
+  // Default fallback
+  return defaultImages.artwork;
 }; 
